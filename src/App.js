@@ -1,25 +1,81 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from "react";
+import todoApi from "./api/todoApi";
+import "./app.scss";
+import Form from "./components/form/Form";
+import List from "./components/list/List";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.handleSaveTodo = this.handleSaveTodo.bind(this);
+    this.handlePrepareEdit = this.handlePrepareEdit.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
+  }
+  initTodo = { id: undefined, name: "", status: undefined };
+  state = {
+    todos: [this.initTodo],
+    todo: this.initTodo,
+  };
+
+  renderData(todo) {
+    const response = todoApi.get();
+    this.setState({
+      ...this.state,
+      todos: response,
+      todo: todo ? todo : this.state.todo,
+    });
+  }
+
+  componentDidMount() {
+    this.renderData();
+  }
+
+  handleSaveTodo(todo) {
+    let oldTodo = this.state.todo
+    if(todo.id === undefined) {
+      todo = {...this.initTodo}
+    }
+    else if (oldTodo.status !== todo.status) {
+      todo = {...this.initTodo}
+    }
+    todoApi.save({ ...todo, status: todo.status ?? 0 });
+    //render list
+    this.renderData({ ...this.initTodo });
+  }
+
+  handleDelete(id) {
+    todoApi.delete(id)
+    this.renderData()
+  }
+
+  handlePrepareEdit(todo) {
+    this.setState({
+      ...this.state,
+      todo: todo,
+    });
+  }
+
+  render() {
+    // console.log(this.state);
+    return (
+      <div className="App">
+        <div className="title">
+          Todo <strong>list</strong>
+        </div>
+        <div className="todo-list">
+          <Form
+            handleSaveTodo={this.handleSaveTodo}
+            todo={this.state.todo || this.initTodo}
+            check={Math.random()}
+          />
+          <List
+            todos={this.state.todos}
+            handlePrepareEdit={this.handlePrepareEdit}
+            handleDelete={this.handleDelete}
+            handleSaveTodo={this.handleSaveTodo}
+          />
+        </div>
+      </div>
+    );
+  }
 }
-
-export default App;
